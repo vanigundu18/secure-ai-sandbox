@@ -1,0 +1,53 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+.venv/
+venv/
+env/
+.env
+.env.*
+!.env.example
+
+# Testing
+.coverage
+.pytest_cache/
+htmlcov/
+.tox/
+
+# Terraform
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.backup
+*.tfvars
+!terraform.tfvars.example
+crash.log
+override.tf
+override.tf.json
+
+# IDE / OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
+Thumbs.db
+
+# Docker
+*.tar
+
+# Credentials — never commit secrets
+credential.json
+service-account-key.json
+*-key.json
+
+# Google site verification artifacts
+google*.html
+sitemap.xml
