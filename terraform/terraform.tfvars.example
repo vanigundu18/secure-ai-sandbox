@@ -1,0 +1,11 @@
+# Copy this file to terraform.tfvars and fill in your values.
+# terraform.tfvars is gitignored — never commit actual values.
+
+project_id  = "your-gcp-project-id"
+region      = "us-central1"
+prefix      = "secure-ai-sandbox"
+
+# Restrict to your corporate VPN or bastion CIDR before production deployment
+admin_cidr  = "0.0.0.0/0"
+
+deletion_protection = true
