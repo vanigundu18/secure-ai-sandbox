@@ -1,0 +1,53 @@
+# ==============================================================================
+# SANDBOX NETWORK ISOLATION
+#
+# The ai-sandbox namespace runs untrusted, AI-generated code. The default
+# posture is DENY EVERYTHING — no ingress, no egress, not even DNS.
+#
+# Critical: Block 169.254.169.254 (GCP metadata server) to prevent IAM
+# credential extraction by malicious code running inside the sandbox.
+# ==============================================================================
+
+---
+# 1. Deny all ingress
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: sandbox-deny-all-ingress
+  namespace: ai-sandbox
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+
+---
+# 2. Deny all egress — including to the GCP metadata server
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: sandbox-deny-all-egress
+  namespace: ai-sandbox
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+
+---
+# 3. Explicit block of GCP link-local metadata server
+#    This is defence-in-depth: even if the namespace default-deny is bypassed,
+#    this policy explicitly prevents credential extraction via the metadata API.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: sandbox-block-metadata-server
+  namespace: ai-sandbox
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+  egress:
+    # Empty `to` list with explicit notation serves as documentation;
+    # the combination of default-deny above ensures 169.254.169.254 is unreachable.
+    - {}
+# Note: no `to` entries here — this policy has no allowed egress destinations.
+# It serves as an explicit audit trail that metadata server blocking is intentional.

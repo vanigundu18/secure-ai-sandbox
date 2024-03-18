@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ai-gateway
+  labels:
+    # Enforce the Kubernetes Pod Security Standard "restricted" baseline:
+    # - No privilege escalation
+    # - Dropped ALL capabilities
+    # - Non-root user required
+    # - Seccomp RuntimeDefault or Localhost
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: latest
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/warn: restricted
+    app.kubernetes.io/part-of: secure-ai-sandbox

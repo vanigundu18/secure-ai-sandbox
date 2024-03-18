@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ai-sandbox
+  labels:
+    # Maximum security posture — required for executing untrusted AI-generated code
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: latest
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/warn: restricted
+    app.kubernetes.io/part-of: secure-ai-sandbox
+    sandbox.ai/isolation: "true"

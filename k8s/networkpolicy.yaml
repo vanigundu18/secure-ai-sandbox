@@ -1,0 +1,119 @@
+# ==============================================================================
+# NETWORK POLICIES — AI GATEWAY NAMESPACE
+#
+# Default stance: deny all ingress and egress; then selectively allow.
+# ==============================================================================
+
+---
+# 1. Default deny all ingress for the namespace
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all-ingress
+  namespace: ai-gateway
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+
+---
+# 2. Default deny all egress for the namespace
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all-egress
+  namespace: ai-gateway
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+
+---
+# 3. Allow ingress to the Gateway pod on port 8080 from the ingress controller namespace
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-ingress-to-gateway
+  namespace: ai-gateway
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: guardrail-gateway
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+      ports:
+        - protocol: TCP
+          port: 8080
+
+---
+# 4. Allow egress from Gateway to DNS (CoreDNS) — required for all service discovery
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-gateway-egress-dns
+  namespace: ai-gateway
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: guardrail-gateway
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+
+---
+# 5. Allow egress from Gateway to the internet on HTTPS only
+#    (Anthropic API: api.anthropic.com:443 / Google Vertex: *.googleapis.com:443)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-gateway-egress-https
+  namespace: ai-gateway
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: guardrail-gateway
+  policyTypes:
+    - Egress
+  egress:
+    - ports:
+        - protocol: TCP
+          port: 443
+
+---
+# 6. Allow Prometheus scraping from the monitoring namespace
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-prometheus-scrape
+  namespace: ai-gateway
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: guardrail-gateway
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: monitoring
+      ports:
+        - protocol: TCP
+          port: 8080

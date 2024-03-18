@@ -1,0 +1,39 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: guardrail-gateway
+  namespace: ai-gateway
+  labels:
+    app.kubernetes.io/name: guardrail-gateway
+    app.kubernetes.io/component: service
+  annotations:
+    # Cloud Load Balancer health-check path
+    cloud.google.com/backend-config: '{"default":"guardrail-gateway-backend"}'
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: guardrail-gateway
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: http
+---
+# BackendConfig for GKE Ingress — configures health-check, timeout, and session affinity
+apiVersion: cloud.google.com/v1
+kind: BackendConfig
+metadata:
+  name: guardrail-gateway-backend
+  namespace: ai-gateway
+spec:
+  healthCheck:
+    checkIntervalSec: 15
+    timeoutSec: 5
+    healthyThreshold: 1
+    unhealthyThreshold: 2
+    type: HTTP
+    requestPath: /health
+    port: 8080
+  timeoutSec: 30
+  connectionDraining:
+    drainingTimeoutSec: 30
