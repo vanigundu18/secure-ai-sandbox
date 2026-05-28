@@ -1,0 +1,8 @@
+# Core Gateway Dependencies
+# In production, replace with real LLM client libraries:
+# anthropic>=0.18.0
+# google-cloud-aiplatform>=1.30.0
+
+# Using standard lightweight requirements for microservice testing
+urllib3>=1.26.0,<3.0.0
+requests>=2.31.0
