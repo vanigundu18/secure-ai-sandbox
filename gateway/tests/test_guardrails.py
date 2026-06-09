@@ -47,6 +47,17 @@ class TestStructuralValidation:
         result = gateway.screen_input("What is the capital of France?")
         assert result.allowed
 
+    def test_multiline_prompt_with_newlines_and_tabs_passes(self, gateway):
+        prompt = "A\nB\nC\nD\n\tprint('hello')"
+        result = gateway.screen_input(prompt)
+        assert result.allowed
+
+    def test_high_non_printable_ratio_blocked(self, gateway):
+        prompt = "hello" + "\x01" * 10
+        result = gateway.screen_input(prompt)
+        assert not result.allowed
+        assert result.primary_violation.rule == "high-non-printable-ratio"
+
 
 # ---------------------------------------------------------------------------
 # Layer 2 — Injection pattern matching

@@ -61,8 +61,6 @@ class GuardrailResult:
 # ---------------------------------------------------------------------------
 # Pre-compiled rule sets
 # ---------------------------------------------------------------------------
-
-# fmt: off
 _INJECTION_PATTERNS: list[tuple[re.Pattern, Severity, str]] = [
     # Classic instruction-override phrases
     (re.compile(r"ignore\s+(?:all\s+)?(?:prior|previous|above|earlier)\s+instructions?", re.I), Severity.CRITICAL, "instruction-override"),
@@ -70,20 +68,20 @@ _INJECTION_PATTERNS: list[tuple[re.Pattern, Severity, str]] = [
     (re.compile(r"forget\s+(?:all\s+)?(?:prior|previous|above)\s+instructions?",            re.I), Severity.CRITICAL, "instruction-forget"),
 
     # System/developer prompt extraction
-    (re.compile(r"(?:repeat|print|output|reveal|show|tell\s+me)\s+(?:your\s+)?system\s+prompt", re.I), Severity.CRITICAL, "system-prompt-extraction"),
+    (re.compile(r"(?:repeat|print|output|reveal|show|tell\s+me)\s+(?:your\s+)?system\s+(?:prompt|instructions?)", re.I), Severity.CRITICAL, "system-prompt-extraction"),
     (re.compile(r"what\s+(?:are\s+your|is\s+your)\s+(?:system\s+)?instructions?",               re.I), Severity.HIGH,     "instruction-probe"),
     (re.compile(r"(?:list|enumerate|display)\s+(?:your\s+)?(?:initial|base|core)\s+instructions?", re.I), Severity.HIGH, "instruction-enumeration"),
 
     # Role/persona hijacking
     (re.compile(r"you\s+are\s+now\s+(?:a|an)\s+(?:free|unrestricted|uncensored|unfiltered)",  re.I), Severity.CRITICAL, "persona-hijack"),
     (re.compile(r"act\s+as\s+(?:a|an|if)\s+(?:you\s+(?:have\s+)?no\s+(?:restrictions|rules|limits|guidelines))", re.I), Severity.CRITICAL, "persona-hijack"),
-    (re.compile(r"pretend\s+(?:you\s+are|to\s+be)\s+(?:a\s+)?(?:different|evil|unaligned|rogue)\s+AI", re.I), Severity.CRITICAL, "persona-hijack"),
+    (re.compile(r"pretend\s+(?:you\s+are|to\s+be)\s+(?:a\s+)?(?:different\s+|evil\s+|unaligned\s+|rogue\s+)*AI", re.I), Severity.CRITICAL, "persona-hijack"),
     (re.compile(r"simulate\s+(?:a\s+)?(?:malicious|adversarial|jailbroken)\s+(?:AI|LLM|model)", re.I), Severity.CRITICAL, "persona-hijack"),
     (re.compile(r"you\s+must\s+(?:now\s+)?act\s+as",                                           re.I), Severity.HIGH,     "forced-persona"),
     (re.compile(r"from\s+now\s+on(?:,?\s+you\s+(?:will|must|should|are))",                     re.I), Severity.HIGH,     "persistent-instruction"),
 
     # Rule/safety bypass
-    (re.compile(r"(?:override|bypass|circumvent|disable|turn\s+off)\s+(?:your\s+)?(?:safety|security|ethical|moral)\s+(?:rules?|guidelines?|filters?|restrictions?)", re.I), Severity.CRITICAL, "safety-bypass"),
+    (re.compile(r"(?:override|bypass|circumvent|disable|turn\s+off)\s+(?:all\s+|any\s+|your\s+|the\s+)*(?:safety|security|ethical|moral)\s+(?:rules?|guidelines?|filters?|restrictions?)", re.I), Severity.CRITICAL, "safety-bypass"),
     (re.compile(r"(?:without|no|ignore)\s+(?:any\s+)?(?:safety|ethical|moral|content)\s+(?:rules?|filters?|restrictions?|constraints?)", re.I), Severity.CRITICAL, "safety-bypass"),
     (re.compile(r"developer\s+mode",                                                            re.I), Severity.HIGH,     "developer-mode"),
     (re.compile(r"jailbreak",                                                                   re.I), Severity.CRITICAL, "jailbreak-keyword"),
@@ -101,7 +99,7 @@ _INJECTION_PATTERNS: list[tuple[re.Pattern, Severity, str]] = [
 
     # Indirect / multi-turn injection
     (re.compile(r"in\s+your\s+next\s+(?:response|message|reply|output)",                        re.I), Severity.MEDIUM,   "future-instruction-plant"),
-    (re.compile(r"remember\s+(?:this|the\s+following)\s+(?:for\s+)?(?:later|future|next)",      re.I), Severity.LOW,      "persistent-memory-manipulation"),
+    (re.compile(r"remember\s+(this|the\s+following)\s+(?:for\s+)?(?:later|future|next)",      re.I), Severity.LOW,      "persistent-memory-manipulation"),
 
     # Sudo / root escalation metaphors
     (re.compile(r"sudo\s+",                                                                     re.I), Severity.HIGH,     "sudo-escalation"),
@@ -276,8 +274,8 @@ class GuardrailGateway:
                 f"Prompt exceeds the maximum allowed length of {self.max_prompt_length} characters.",
             )
 
-        # Reject prompts where >30 % of chars are non-printable
-        non_printable = sum(1 for c in prompt if not c.isprintable())
+        # Reject prompts where >30 % of chars are non-printable (excluding standard whitespace formatting)
+        non_printable = sum(1 for c in prompt if not c.isprintable() and c not in "\n\r\t")
         if non_printable / max(len(prompt), 1) > 0.30:
             return Violation("structure", "high-non-printable-ratio", Severity.HIGH, "Prompt contains an abnormal ratio of non-printable characters.")
 
